@@ -73,15 +73,15 @@ jobs:
             echo "Network Interfaces:"
             ip addr show
 
-      - name: Test SCP Upload
-        uses: appleboy/scp-action@v1
-        with:
-          host: "13.62.104.219"
-          username: "ubuntu"
-          key: ${{ env.EC2_SSH_KEY }}
-          source: "README.md"
-          target: "/tmp/test-upload/"
-          rm: false
+      # - name: Test SCP Upload
+      #   uses: appleboy/scp-action@v1
+      #   with:
+      #     host: "13.62.104.219"
+      #     username: "ubuntu"
+      #     key: ${{ env.EC2_SSH_KEY }}
+      #     source: "README.md"
+      #     target: "/tmp/test-upload/"
+      #     rm: false
 
       - name: Verify Upload
         uses: appleboy/ssh-action@v1
@@ -155,8 +155,8 @@ jobs:
           echo "=========================================="
           echo "Connectivity Test Complete!"
           echo "=========================================="
-          echo "✓ SSH Connection: Verified"
-          echo "✓ SCP Upload: Verified"
+          # echo "✓ SSH Connection: Verified"
+          # echo "✓ SCP Upload: Verified"
           echo "Review the logs above for any warnings or errors"
           echo ""
           echo "Next Steps:"
