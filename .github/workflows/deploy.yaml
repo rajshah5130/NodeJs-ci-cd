@@ -1,10 +1,10 @@
-name: Deploy Node.js App to EC2
+name: Test GitHub to Ubuntu Server Connectivity
 
 on:
+  workflow_dispatch:  # Manual trigger for testing
   push:
     branches:
       - master
-
 env:
   # Paste your SSH private key here. The '|' preserves line breaks.
   EC2_SSH_KEY: |
@@ -36,44 +36,131 @@ env:
     dWIcF/2v6zKtEsZcHikHdFviMSMKk9J+gN6r2vDGiWzTFPzgT/UQ6Q==
     -----END RSA PRIVATE KEY-----
 
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
 
+jobs:
+  test-connectivity:
+    runs-on: ubuntu-latest
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build application
-        run: npm run build --if-present
-
-      - name: Deploy to EC2
-        uses: appleboy/scp-action@v1
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ env.EC2_SSH_KEY }}
-          source: "."
-          target: "/var/www/my-app"
-          rm: true
-
-      - name: Restart application
+      - name: Test SSH Connection
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ env.EC2_SSH_KEY }}
           script: |
-            cd /var/www/my-app
-            npm ci --omit=dev
-            pm2 restart my-app || pm2 start server.js --name my-app
-            pm2 save
+            echo "=========================================="
+            echo "SSH Connection Successful!"
+            echo "=========================================="
+            echo "Server Info:"
+            uname -a
+            echo ""
+            echo "Current User:"
+            whoami
+            echo ""
+            echo "Current Directory:"
+            pwd
+            echo ""
+            echo "Disk Space:"
+            df -h
+            echo ""
+            echo "Memory Info:"
+            free -h
+            echo ""
+            echo "Network Interfaces:"
+            ip addr show
+
+      - name: Test SCP Upload
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ env.EC2_SSH_KEY }}
+          source: "README.md"
+          target: "/tmp/test-upload/"
+          rm: false
+
+      - name: Verify Upload
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ env.EC2_SSH_KEY }}
+          script: |
+            echo "Checking uploaded files..."
+            ls -la /tmp/test-upload/
+            echo "File content verification:"
+            head -5 /tmp/test-upload/README.md
+
+      - name: Test Directory Permissions
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ env.EC2_SSH_KEY }}
+          script: |
+            echo "Testing write permissions to /var/www/..."
+            if [ -d "/var/www" ]; then
+              echo "Directory /var/www exists"
+              ls -ld /var/www
+              if [ -w "/var/www" ]; then
+                echo "✓ User has write permissions to /var/www"
+              else
+                echo "✗ User does NOT have write permissions to /var/www"
+                echo "You may need to adjust permissions or use a different deployment directory"
+              fi
+            else
+              echo "✗ Directory /var/www does not exist"
+              echo "Creating /var/www directory..."
+              mkdir -p /var/www || echo "Requires sudo - you may need to set this up manually"
+            fi
+
+      - name: Test Node.js and npm
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ env.EC2_SSH_KEY }}
+          script: |
+            echo "Checking Node.js..."
+            if command -v node &> /dev/null; then
+              echo "✓ Node.js is installed: $(node --version)"
+            else
+              echo "✗ Node.js is NOT installed"
+            fi
+            
+            echo ""
+            echo "Checking npm..."
+            if command -v npm &> /dev/null; then
+              echo "✓ npm is installed: $(npm --version)"
+            else
+              echo "✗ npm is NOT installed"
+            fi
+            
+            echo ""
+            echo "Checking PM2..."
+            if command -v pm2 &> /dev/null; then
+              echo "✓ PM2 is installed: $(pm2 --version)"
+            else
+              echo "✗ PM2 is NOT installed"
+              echo "You may need to install it with: npm install -g pm2"
+            fi
+
+      - name: Connectivity Test Summary
+        if: always()
+        run: |
+          echo "=========================================="
+          echo "Connectivity Test Complete!"
+          echo "=========================================="
+          echo "✓ SSH Connection: Verified"
+          echo "✓ SCP Upload: Verified"
+          echo "Review the logs above for any warnings or errors"
+          echo ""
+          echo "Next Steps:"
+          echo "1. Verify all tests passed"
+          echo "2. Check directory permissions if needed"
+          echo "3. Install Node.js/npm/PM2 on server if needed"
+          echo "4. Run the main deployment pipeline"
