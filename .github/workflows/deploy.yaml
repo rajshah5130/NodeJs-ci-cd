@@ -5,53 +5,75 @@ on:
     branches:
       - master
 
+env:
+  # Paste your SSH private key here. The '|' preserves line breaks.
+  EC2_SSH_KEY: |
+    -----BEGIN RSA PRIVATE KEY-----
+    MIIEpAIBAAKCAQEAzxiLO25vTC+5nBCUZm4wpHdaPuc9mymR41oTVUhGFE6bw+P6
+    UAYdau76+tRPrvWg6KQqHobuXqXeUwyztqf39RKqk1aJsPhGBUi63r7cSCmJiM4A
+    IdjAan5YzK7u8+TWmHfijm0Pg2s9y3b2Qj7e+aye97dNF7IOpJBy8WOuwi8CSN2v
+    S7wmyN9+2XKc6RAe8+4fqyBIksFSY09e3vGzkCcxJTPpUC1hO8ekFyW5opyUc/Od
+    vskfNZzN3k90lD1HfOE0Pq9SibZnLDurb/yF55mTc+y5diWG5UoXsWQeIOiVs65B
+    wYhmyLb/pXgFDqYy5gCM4kLgO66ZSxcOdR/TEQIDAQABAoIBAGD5PTk3HSavslpB
+    6TuNnXll6fxKi658aLPtGeB1V1tq88Vmm2+dbWkFPsD1adqjahWFybNBu5zWTqTU
+    7dI6FQHNG9KiUxdrKl6PD/H9rWidCqnkzGsM9Azp3Or7fyj1nwcGHDBVIU6IiQcd
+    TXL3vbFsA4Q7cP4HgpPMkAY4hzylrr2mO7Hug2APOJUN0ztTzQaVTLQn4ETLwi/G
+    q/d3ImIGnCHUepRt29x+wyoF4vTL63+KnA+3EueNLlYx0IN6XCHe9Vga6VmOHSsX
+    Bs77Km8zWstoszRi9FAxV2+GOyW72bB//Wlc3h8Dwf7ctfLgVPxvxyCEXH0nneBL
+    lqV6cgECgYEA748AYd1+vpDVr10/F13/x+UJAjkaLab1jTCCUh7zNqK48qiM5/Bk
+    oZKhKL+YhZRMkb3lPcKFaV2Q7WOrW3YsmmvGX8Js+LE0W5w3KMkNQkxMj7bKBmfj
+    QVNCK3u9ssLyQzRxBUkBaVj/Wsj0aFWJmCn+kyMn7hIfNI2hutjjK0UCgYEA3U8t
+    tVZlibt8qHm+zDUMiH1kBRMWN+mPYe6n+uFWGOFX1gqHRNY8u9ZPD2xMOj1wCp+3
+    HuXyzeFjhOOMjQ+PNgp43iuBms88czGeHwgWBqgh8//XsxR7DvQ4LRHmIVLTW3hZ
+    8z/7lRhpJ2Ag75zljFiqHvubGrmtENp58LLI310CgYEAh1pQB/ujEj85TSUtcaF9
+    1M7W4TesT+EG2qhu6cFtABC+2PRc8OvFn/j+L8zZe5gID0yxCs0unhLswQRQnJPP
+    rcx5QD/VXEqbX6uLCvNWF4COvaC00xu9rnpBZ9o5m5hEU658sVTHhGNxnDTwy0aR
+    QLVxjmcNt5jrosDngW/sItUCgYBjNy0Rv/LzhYdEbJg6Koo84qIlmEH8vQvX5suO
+    MNmNe/EJ91xfYwCFYXW+P1oJPiPtz16kTojE/gfEutL3JoOYwacgSzbmdYPvTM5L
+    sS9WuqfGIOvN0B+/O4O3yO93/w7cUh9Za1TZqcDysyjw41ER02opS7lkiNtq09eZ
+    Lj3ZzQKBgQCbh459g77B1rbZyWGqj8W9EODiawIFGXn/wADlEJdqABSEUNuf4cO5
+    OzmIWjGrTqD5UpAueD0xQY1yauddu7QuyXBvSrlL85mh/4lfkVF7QoBVNyFS47Po
+    dWIcF/2v6zKtEsZcHikHdFviMSMKk9J+gN6r2vDGiWzTFPzgT/UQ6Q==
+    -----END RSA PRIVATE KEY-----
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      
       - name: Checkout code
         uses: actions/checkout@v4
 
-      
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: npm
 
-      
       - name: Install dependencies
         run: npm ci
 
-      
       - name: Build application
         run: npm run build --if-present
 
-      
       - name: Deploy to EC2
         uses: appleboy/scp-action@v1
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
+          key: ${{ env.EC2_SSH_KEY }}
           source: "."
           target: "/var/www/my-app"
           rm: true
 
-      
       - name: Restart application
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
+          key: ${{ env.EC2_SSH_KEY }}
           script: |
             cd /var/www/my-app
-
             npm ci --omit=dev
-
             pm2 restart my-app || pm2 start server.js --name my-app
-
             pm2 save
