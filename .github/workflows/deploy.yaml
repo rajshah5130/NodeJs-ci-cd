@@ -83,40 +83,40 @@ jobs:
       #     target: "/tmp/test-upload/"
       #     rm: false
 
-      - name: Verify Upload
-        uses: appleboy/ssh-action@v1
-        with:
-          host: 13.62.104.219
-          username: ubuntu
-          key: ${{ env.EC2_SSH_KEY }}
-          script: |
-            echo "Checking uploaded files..."
-            ls -la /tmp/test-upload/
-            echo "File content verification:"
-            head -5 /tmp/test-upload/README.md
+      # - name: Verify Upload
+      #   uses: appleboy/ssh-action@v1
+      #   with:
+      #     host: 13.62.104.219
+      #     username: ubuntu
+      #     key: ${{ env.EC2_SSH_KEY }}
+      #     script: |
+      #       echo "Checking uploaded files..."
+      #       ls -la /tmp/test-upload/
+      #       echo "File content verification:"
+      #       head -5 /tmp/test-upload/README.md
 
-      - name: Test Directory Permissions
-        uses: appleboy/ssh-action@v1
-        with:
-          host: 13.62.104.219
-          username: ubuntu
-          key: ${{ env.EC2_SSH_KEY }}
-          script: |
-            echo "Testing write permissions to /var/www/..."
-            if [ -d "/var/www" ]; then
-              echo "Directory /var/www exists"
-              ls -ld /var/www
-              if [ -w "/var/www" ]; then
-                echo "✓ User has write permissions to /var/www"
-              else
-                echo "✗ User does NOT have write permissions to /var/www"
-                echo "You may need to adjust permissions or use a different deployment directory"
-              fi
-            else
-              echo "✗ Directory /var/www does not exist"
-              echo "Creating /var/www directory..."
-              mkdir -p /var/www || echo "Requires sudo - you may need to set this up manually"
-            fi
+      # - name: Test Directory Permissions
+      #   uses: appleboy/ssh-action@v1
+      #   with:
+      #     host: 13.62.104.219
+      #     username: ubuntu
+      #     key: ${{ env.EC2_SSH_KEY }}
+      #     script: |
+      #       echo "Testing write permissions to /var/www/..."
+      #       if [ -d "/var/www" ]; then
+      #         echo "Directory /var/www exists"
+      #         ls -ld /var/www
+      #         if [ -w "/var/www" ]; then
+      #           echo "✓ User has write permissions to /var/www"
+      #         else
+      #           echo "✗ User does NOT have write permissions to /var/www"
+      #           echo "You may need to adjust permissions or use a different deployment directory"
+      #         fi
+      #       else
+      #         echo "✗ Directory /var/www does not exist"
+      #         echo "Creating /var/www directory..."
+      #         mkdir -p /var/www || echo "Requires sudo - you may need to set this up manually"
+      #       fi
 
       - name: Test Node.js and npm
         uses: appleboy/ssh-action@v1
