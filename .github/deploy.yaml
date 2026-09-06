@@ -1,0 +1,58 @@
+yaml
+name: Deploy Node.js App to EC2
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      
+      - name: Install dependencies
+        run: npm ci
+
+      
+      - name: Build application
+        run: npm run build --if-present
+
+      
+      - name: Deploy to EC2
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "."
+          target: "/var/www/my-app"
+          rm: true
+
+      
+      - name: Restart application
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd /var/www/my-app
+
+            npm ci --omit=dev
+
+            pm2 restart my-app || pm2 start server.js --name my-app
+
+            pm2 save
