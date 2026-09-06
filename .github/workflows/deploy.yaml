@@ -48,8 +48,8 @@ jobs:
       - name: Test SSH Connection
         uses: appleboy/ssh-action@v1
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
+          host: "13.62.104.219"
+          username: "ubuntu"
           key: ${{ env.EC2_SSH_KEY }}
           script: |
             echo "=========================================="
@@ -76,8 +76,8 @@ jobs:
       - name: Test SCP Upload
         uses: appleboy/scp-action@v1
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
+          host: "13.62.104.219"
+          username: "ubuntu"
           key: ${{ env.EC2_SSH_KEY }}
           source: "README.md"
           target: "/tmp/test-upload/"
@@ -86,8 +86,8 @@ jobs:
       - name: Verify Upload
         uses: appleboy/ssh-action@v1
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
+          host: "13.62.104.219"
+          username: "ubuntu"
           key: ${{ env.EC2_SSH_KEY }}
           script: |
             echo "Checking uploaded files..."
@@ -98,8 +98,8 @@ jobs:
       - name: Test Directory Permissions
         uses: appleboy/ssh-action@v1
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
+          host: "13.62.104.219"
+          username: "ubuntu"
           key: ${{ env.EC2_SSH_KEY }}
           script: |
             echo "Testing write permissions to /var/www/..."
@@ -121,8 +121,8 @@ jobs:
       - name: Test Node.js and npm
         uses: appleboy/ssh-action@v1
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
+          host: "13.62.104.219"
+          username: "ubuntu"
           key: ${{ env.EC2_SSH_KEY }}
           script: |
             echo "Checking Node.js..."
